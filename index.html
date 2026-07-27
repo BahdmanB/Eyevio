@@ -27,6 +27,7 @@
   }
   h1,h2,h3{font-family:'Fraunces',serif; font-weight:600; letter-spacing:-0.01em;}
 
+  /* PHONE FRAME */
   .phone{
     width:380px; max-width:100%;
     background:var(--paper);
@@ -107,6 +108,14 @@
   .summary-box{background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:6px; font-size:0.85rem; color:var(--slate);}
   .summary-box b{color:var(--navy);}
 
+  .pay-message{
+    margin-top:14px; padding:10px 12px; border-radius:8px; font-size:0.8rem;
+    display:none;
+  }
+  .pay-message.show{display:block;}
+  .pay-message.error{background:rgba(214,69,69,0.1); color:var(--alert); border:1px solid rgba(214,69,69,0.3);}
+  .pay-message.success{background:rgba(30,122,111,0.1); color:var(--teal); border:1px solid rgba(30,122,111,0.3);}
+
   .spacer{flex:1;}
   .nav-row{display:flex; gap:10px; margin-top:20px;}
   .btn{
@@ -134,10 +143,10 @@
     <div class="sub">Free to register. Your details help us match you to the right care.</div>
 
     <label>Full name</label>
-    <input type="text" placeholder="e.g. Okoro Ebubechi">
+    <input type="text" placeholder="e.g. Chidinma Okafor">
 
     <label>Email address</label>
-    <input type="email" placeholder="you@email.com">
+    <input type="email" id="regEmail" placeholder="you@email.com">
 
     <label>Phone number</label>
     <input type="tel" placeholder="080X XXX XXXX">
@@ -202,10 +211,12 @@
       <div class="fee-line total"><span>Total due now</span><span>₦2,500</span></div>
     </div>
 
+    <div id="payMessage" class="pay-message"></div>
+
     <div class="spacer"></div>
     <div class="nav-row">
       <button class="btn btn-ghost" onclick="goTo(1)">Back</button>
-      <button class="btn btn-primary" onclick="goTo(3)">Pay & continue</button>
+      <button class="btn btn-primary" id="payBtn" onclick="payWithPaystack()">Pay & continue</button>
     </div>
   </div>
 
@@ -412,7 +423,12 @@
 
 </div>
 
+<!-- Paystack Inline library — must load before payWithPaystack() can call PaystackPop -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
+
 <script>
+  const PAYSTACK_PUBLIC_KEY = 'pk_test_c256724d49f3d2e3fd546d2b6f4e5d0c06e17a58';
+
   const total = 10;
   const dotsEl = document.getElementById('dots');
   for(let i=1;i<=total;i++){
@@ -428,6 +444,60 @@
     for(let i=1;i<=total;i++){
       document.getElementById('dot'+i).classList.toggle('done', i<=n);
     }
+  }
+
+  function showPayMessage(text, type){
+    const el = document.getElementById('payMessage');
+    el.textContent = text;
+    el.className = 'pay-message show ' + type;
+  }
+
+  function clearPayMessage(){
+    const el = document.getElementById('payMessage');
+    el.textContent = '';
+    el.className = 'pay-message';
+  }
+
+  function payWithPaystack(){
+    clearPayMessage();
+
+    // Use the email the patient entered at registration; fall back only if it's empty
+    const emailInput = document.getElementById('regEmail');
+    const email = (emailInput && emailInput.value.trim()) ? emailInput.value.trim() : 'patient@example.com';
+
+    if(typeof PaystackPop === 'undefined'){
+      showPayMessage('Payment service failed to load. Check your connection and try again.', 'error');
+      return;
+    }
+
+    const payBtn = document.getElementById('payBtn');
+    payBtn.disabled = true;
+
+    const handler = PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: email,
+      amount: 250000, // ₦2,500 in kobo (Paystack expects the smallest currency unit)
+      currency: 'NGN',
+      ref: 'EYEVIO-' + Math.floor(Math.random() * 1000000000) + Date.now(),
+      metadata: {
+        custom_fields: [
+          { display_name: "Purpose", variable_name: "purpose", value: "Eyevio consultation fee" }
+        ]
+      },
+      callback: function(response){
+        // Successful payment — Paystack has confirmed the transaction client-side
+        payBtn.disabled = false;
+        showPayMessage('Payment successful. Reference: ' + response.reference, 'success');
+        goTo(3);
+      },
+      onClose: function(){
+        // User closed the popup without completing payment
+        payBtn.disabled = false;
+        showPayMessage('Payment was cancelled. You can try again when ready.', 'error');
+      }
+    });
+
+    handler.openIframe();
   }
 </script>
 
