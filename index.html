@@ -134,7 +134,7 @@
     <div class="sub">Free to register. Your details help us match you to the right care.</div>
 
     <label>Full name</label>
-    <input type="text" placeholder="e.g. Okoro James Ebubechi">
+    <input type="text" placeholder="e.g. Chidinma Okafor">
 
     <label>Email address</label>
     <input type="email" placeholder="you@email.com">
@@ -185,7 +185,17 @@
     <h2>Pay to start your session</h2>
     <div class="sub">One fee unlocks AI pre-screening and your consultation.</div>
 
-    <button class="btn btn-primary" onclick="payNow()">Pay ₦2,500</button>
+    <label>Pay with</label>
+    <select>
+      <option>Select your bank</option>
+      <option>Access Bank</option>
+      <option>GTBank</option>
+      <option>Zenith Bank</option>
+      <option>UBA</option>
+      <option>Opay / Moniepoint (Microfinance)</option>
+      <option>Other Nigerian bank</option>
+    </select>
+
     <div class="summary-box" style="margin-top:20px;">
       <div class="fee-line"><span>Consultation fee</span><b>₦2,500</b></div>
       <div class="fee-line"><span>AI pre-screening</span><span>Included</span></div>
@@ -401,28 +411,24 @@
   </div>
 
 </div>
-  
-<script src="https://js.paystack.co/v1/inline.js"></script>
+
 <script>
- function payNow() {
-    let handler = PaystackPop.setup({
-        key: 'pk_test_c256724d49f3d2e3fd546d2b6f4e5d0c06e17a58', // Replace with your Paystack Public Key
-        email: 'patient@example.com',   // Replace with the user's email
-        amount: 250000,                 // ₦2,500 in kobo
-        currency: 'NGN',
-
-        callback: function(response) {
-            alert("Payment Successful!");
-            goTo(3); // Move to Step 3
-        },
-
-        onClose: function() {
-            alert("Payment Cancelled.");
-        }
-    });
-
-    handler.openIframe();
-}
+  const total = 10;
+  const dotsEl = document.getElementById('dots');
+  for(let i=1;i<=total;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===1 ? ' done' : '');
+    d.id = 'dot'+i;
+    dotsEl.appendChild(d);
+  }
+  function goTo(n){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelector('.screen[data-step="'+n+'"]').classList.add('active');
+    document.getElementById('stepCount').textContent = 'Step '+n+' of '+total;
+    for(let i=1;i<=total;i++){
+      document.getElementById('dot'+i).classList.toggle('done', i<=n);
+    }
+  }
 </script>
 
 </body>
